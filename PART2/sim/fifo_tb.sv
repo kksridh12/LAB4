@@ -41,6 +41,25 @@ module fifo_tb;
 		.rrst_n(rrst_n)
 	);
 
+	fifo_checker #(
+		.DSIZE(DSIZE),
+		.ASIZE(ASIZE),
+		.ASYNC(1)
+	) u_fifo_checker (
+		.wclk(wclk),
+		.wrst_n(wrst_n),
+		.winc(winc),
+		.wdata(wdata),
+		.wfull(wfull),
+		.almost_wfull(almost_wfull),
+		.rclk(rclk),
+		.rrst_n(rrst_n),
+		.rinc(rinc),
+		.rdata(rdata),
+		.rempty(rempty),
+		.almost_rempty(almost_rempty)
+	);
+
 	initial begin
 		wclk = 1'b0;
 		forever #5 wclk = ~wclk;
@@ -100,6 +119,9 @@ module fifo_tb;
 		repeat (2) @(posedge wclk);
 		repeat (2) @(posedge rclk);
 
+		// Release reset away from active clock edges to avoid races with
+		// the DUT flops and the checker's #1step sampling.
+		@(negedge wclk);
 		wrst_n = 1'b1;
 		rrst_n = 1'b1;
 
@@ -144,6 +166,30 @@ module fifo_tb;
 			$display("TEST 1: FIFO full/empty PASSED");
 		else
 			$display("TEST 1: FIFO full/empty FAILED with %0d errors", errors);
+	endtask
+
+	// ============================================================
+	// TEST 0: Empty FIFO must block reads
+	// ============================================================
+	task automatic test_empty_read;
+		reset_fifo();
+
+		// With no writes, the read pointer must remain empty after the
+		// synchronized-pointer pipeline has had several read clocks.
+		repeat (3) @(posedge rclk);
+		@(negedge rclk);
+		check_flag(rempty, 1'b1, "rempty with no writes");
+
+		// An attempted read on an empty FIFO must not advance the pointer.
+		rinc = 1'b1;
+		@(negedge rclk);
+		rinc = 1'b0;
+		check_flag(rempty, 1'b1, "rempty after blocked read on empty FIFO");
+
+		if (errors == 0)
+			$display("TEST 0: Empty FIFO read blocking PASSED");
+		else
+			$display("TEST 0: Empty FIFO read blocking FAILED with %0d errors", errors);
 	endtask
 
 
@@ -292,6 +338,12 @@ module fifo_tb;
 
 		case (testname)
 
+			"empty_read": begin
+				$fsdbDumpfile("test0_empty_read.fsdb");
+				$fsdbDumpvars(0, "+mda");
+				test_empty_read();
+			end
+
 			"full_empty": begin
 				$fsdbDumpfile("test1_full_empty.fsdb");
 				$fsdbDumpvars(0, "+mda");
@@ -313,6 +365,7 @@ module fifo_tb;
 			default: begin
 				$display("ERROR: Unknown testcase '%s'", testname);
 				$display("Use:");
+				$display("  +TEST=empty_read");
 				$display("  +TEST=full_empty");
 				$display("  +TEST=almost");
 				$display("  +TEST=async_rw");

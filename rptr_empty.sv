@@ -57,7 +57,11 @@ module rptr_empty #(parameter ADDRSIZE = 4)
     // Almost-empty uses the next read pointer, so the flag reflects the
     // occupancy after a read accepted on the current clock edge.
     always_comb begin
-        rempty_val        = (rgraynext == rq2_wptr);
+        `ifndef BUG
+            rempty_val        = (rgraynext == rq2_wptr);
+        `else 
+            rempty_val        = (rgraynext == rq2_wptr-1);
+        `endif
         // Pointer subtraction is modulo 2**(ADDRSIZE+1), which handles wraparound.
         almost_rempty_val = (wptr_bin - rbinnext) <= ALMOST;
     end
