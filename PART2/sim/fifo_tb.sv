@@ -331,33 +331,40 @@ module fifo_tb;
 	// Select testcase from command line
 	// ============================================================
 	string testname;
+	string fsdb_prefix;
 
 	initial begin
 		if (!$value$plusargs("TEST=%s", testname))
 			testname = "full_empty";
 
+		`ifdef BUG
+		fsdb_prefix = "bug_";
+		`else
+		fsdb_prefix = "normal_";
+		`endif
+
 		case (testname)
 
 			"empty_read": begin
-				$fsdbDumpfile("test0_empty_read.fsdb");
+				$fsdbDumpfile($sformatf("%stest0_empty_read.fsdb", fsdb_prefix));
 				$fsdbDumpvars(0, "+mda");
 				test_empty_read();
 			end
 
 			"full_empty": begin
-				$fsdbDumpfile("test1_full_empty.fsdb");
+				$fsdbDumpfile($sformatf("%stest1_full_empty.fsdb", fsdb_prefix));
 				$fsdbDumpvars(0, "+mda");
 				test_full_empty();
 			end
 
 			"almost": begin
-				$fsdbDumpfile("test2_almost.fsdb");
+				$fsdbDumpfile($sformatf("%stest2_almost.fsdb", fsdb_prefix));
 				$fsdbDumpvars(0, "+mda");
 				test_almost_flags();
 			end
 
 			"async_rw": begin
-				$fsdbDumpfile("test3_async_rw.fsdb");
+				$fsdbDumpfile($sformatf("%stest3_async_rw.fsdb", fsdb_prefix));
 				$fsdbDumpvars(0, "+mda");
 				test_async_rw();
 			end

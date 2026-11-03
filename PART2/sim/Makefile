@@ -43,7 +43,24 @@ verdi:
 	$(VERDI) -dbdir ./simv.daidir -nologo
 
 # This launches Verdi with waves loaded
-waves_verdi:
+test0_waves:
+	rm -rf novas.fsdb
+	ln -s test0_empty_read.fsdb novas.fsdb
+	$(VERDI) -dbdir ./simv.daidir -ssf novas.fsdb -nologo
+
+test1_waves:
+	rm -rf novas.fsdb
+	ln -s test1_full_empty.fsdb novas.fsdb
+	$(VERDI) -dbdir ./simv.daidir -ssf novas.fsdb -nologo
+
+test2_waves:
+	rm -rf novas.fsdb
+	ln -s test2_almost.fsdb novas.fsdb
+	$(VERDI) -dbdir ./simv.daidir -ssf novas.fsdb -nologo
+
+test3_waves:
+	rm -rf novas.fsdb
+	ln -s test3_async_rw.fsdb novas.fsdb
 	$(VERDI) -dbdir ./simv.daidir -ssf novas.fsdb -nologo
 
 clean:
