@@ -31,7 +31,7 @@ int mem[MAX_DEPTH];
 // ---------------- write clock domain ----------------
 int wbin;            // write pointer
 int wbin_old;        // write pointer before its last update
-long long wbin_time; // sim time of the last update
+int wbin_time; // sim time of the last update
 int wq1_rptr;        // read pointer, synchronizer stage 1
 int wq2_rptr;        // read pointer, synchronizer stage 2
 int wfull;
@@ -40,7 +40,7 @@ int almost_wfull;
 // ---------------- read clock domain ----------------
 int rbin;
 int rbin_old;
-long long rbin_time;
+int rbin_time;
 int rq1_wptr;
 int rq2_wptr;
 int rempty;
@@ -95,13 +95,13 @@ void fifo_init(int asize, int async_mode) {
 // When both clocks rise at the same time, the RTL flops see the other
 // domain's pointer from BEFORE the edge. These two helpers return that
 // value no matter which of fifo_write / fifo_read is called first.
-int rptr_seen_by_write(long long t) {
+int rptr_seen_by_write(int t) {
     if (rbin_time == t)
         return rbin_old;
     return rbin;
 }
 
-int wptr_seen_by_read(long long t) {
+int wptr_seen_by_read(int t) {
     if (wbin_time == t)
         return wbin_old;
     return wbin;
@@ -110,7 +110,7 @@ int wptr_seen_by_read(long long t) {
 // ---------------- posedge wclk ----------------
 // winc/wdata are the values just before the edge.
 // Returns 1 if the write was accepted.
-int fifo_write(long long t, int winc, int wdata) {
+int fifo_write(int t, int winc, int wdata) {
     int rptr_now = rptr_seen_by_write(t);
     int rptr_used;      // read pointer the flag logic sees
     int accepted = 0;
@@ -148,7 +148,7 @@ int fifo_write(long long t, int winc, int wdata) {
 // rinc is the value just before the edge.
 // Returns 1 if the read was accepted; fifo_rdata() then gives the
 // word the DUT should have had on rdata.
-int fifo_read(long long t, int rinc) {
+int fifo_read(int t, int rinc) {
     int wptr_now = wptr_seen_by_read(t);
     int wptr_used;
     int accepted = 0;
@@ -179,7 +179,7 @@ int fifo_read(long long t, int rinc) {
     return accepted;
 }
 
-// ---------------- getters ----------------
+// ---------------- status flag getters ----------------
 int fifo_wfull()         { return wfull; }
 int fifo_almost_wfull()  { return almost_wfull; }
 int fifo_rempty()        { return rempty; }

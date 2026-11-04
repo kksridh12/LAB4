@@ -79,6 +79,9 @@ module fifo_tb;
 			$error("%s: expected %b, got %b at time %0t", name, expected, actual, $time);
 			errors++;
 		end
+		else begin
+			$display("[PASS] %s: expected %b, got %b at time %0t", name, expected, actual, $time);
+		end
 	endtask
 
 	task automatic write_word(input logic [DSIZE-1:0] value);

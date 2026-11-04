@@ -20,8 +20,8 @@
 import "DPI-C" function void fifo_init(input int asize, input int async_mode);
 import "DPI-C" function void fifo_wreset();
 import "DPI-C" function void fifo_rreset();
-import "DPI-C" function int  fifo_write(input longint t, input int winc, input int wdata);
-import "DPI-C" function int  fifo_read (input longint t, input int rinc);
+import "DPI-C" function int  fifo_write(input int t, input int winc, input int wdata);
+import "DPI-C" function int  fifo_read (input int t, input int rinc);
 import "DPI-C" function int  fifo_wfull();
 import "DPI-C" function int  fifo_almost_wfull();
 import "DPI-C" function int  fifo_rempty();
@@ -72,7 +72,7 @@ module fifo_checker #(parameter DSIZE = 8,
     always @(negedge wrst_n) fifo_wreset();
     always @(negedge rrst_n) fifo_rreset();
 
-    // ---------------- write domain ----------------
+    // Based on the sampled values, check the DUT write flags.
     always @(wcb) begin
         if (wcb.wrst_n !== 1'b1) begin
             fifo_wreset();
@@ -91,7 +91,7 @@ module fifo_checker #(parameter DSIZE = 8,
         end
     end
 
-    // ---------------- read domain ----------------
+    // Based on the sampled values, check the DUT read flags.
     always @(rcb) begin
         if (rcb.rrst_n !== 1'b1) begin
             fifo_rreset();
