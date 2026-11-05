@@ -12,9 +12,7 @@
 // Pointers are kept as plain binary counters from 0 to 2*DEPTH-1.
 // (The RTL uses Gray code only so the pointer can cross clock
 // domains safely; the C model does not need that.)
-//
-// Build: vcs -sverilog <tb + rtl files> fifo_checker.sv fifo_model.c
-// ------------------------------------------------------------
+
 
 #include <stdio.h>
 

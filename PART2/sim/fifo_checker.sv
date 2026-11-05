@@ -12,10 +12,6 @@
 //
 // Hook-up example (in the testbench, next to the DUT):
 //   fifo_checker #(DSIZE, ASIZE, ASYNC) u_chk (.*);
-//
-// Build:
-//   vcs -sverilog <tb + rtl files> fifo_checker.sv fifo_model.c
-// ------------------------------------------------------------
 
 import "DPI-C" function void fifo_init(input int asize, input int async_mode);
 import "DPI-C" function void fifo_wreset();

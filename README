@@ -1,0 +1,31 @@
+
+# PART2
+
+cd PART2/sim
+
+# for normal no bug version 
+make compile_verdi
+./simv +TEST=full_empty
+./simv +TEST=almost
+./simv +TEST=async_rw
+./simv +TEST=empty_read
+make test0_waves
+make test1_waves
+make test2_waves
+make test3_waves
+
+# for bug version
+make compile_bug_verdi
+./simv +TEST=full_empty +BUG
+./simv +TEST=almost +BUG
+./simv +TEST=async_rw +BUG
+./simv +TEST=empty_read +BUG
+make test0_bug_waves
+make test1_bug_waves
+make test2_bug_waves
+make test3_bug_waves
+
+
+# PART3
+
+
