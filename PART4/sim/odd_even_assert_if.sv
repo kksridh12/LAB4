@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 // interface for the even/odd FIFO.
 // Signals are driven by the testbench from the DUT hierarchy.
 interface odd_even_assert_if #(parameter int DSIZE = 8) (
