@@ -42,23 +42,46 @@ verdi:
 # This launches Verdi with waves loaded
 test0_waves:
 	rm -rf novas.fsdb
-	ln -s test0_empty_read.fsdb novas.fsdb
+	ln -s normal_test0_empty_read.fsdb novas.fsdb
 	$(VERDI) -dbdir ./simv.daidir -ssf novas.fsdb -nologo
 
 test1_waves:
 	rm -rf novas.fsdb
-	ln -s test1_full_empty.fsdb novas.fsdb
+	ln -s normal_test1_full_empty.fsdb novas.fsdb
 	$(VERDI) -dbdir ./simv.daidir -ssf novas.fsdb -nologo
 
 test2_waves:
 	rm -rf novas.fsdb
-	ln -s test2_almost.fsdb novas.fsdb
+	ln -s normal_test2_almost.fsdb novas.fsdb
 	$(VERDI) -dbdir ./simv.daidir -ssf novas.fsdb -nologo
 
 test3_waves:
 	rm -rf novas.fsdb
-	ln -s test3_async_rw.fsdb novas.fsdb
+	ln -s normal_test3_async_rw.fsdb novas.fsdb
 	$(VERDI) -dbdir ./simv.daidir -ssf novas.fsdb -nologo
+
+
+# This launches Verdi with waves loaded
+test0_bug_waves:
+	rm -rf novas.fsdb
+	ln -s bug_test0_empty_read.fsdb novas.fsdb
+	$(VERDI) -dbdir ./simv.daidir -ssf novas.fsdb -nologo
+
+test1_bug_waves:
+	rm -rf novas.fsdb
+	ln -s bug_test1_full_empty.fsdb novas.fsdb
+	$(VERDI) -dbdir ./simv.daidir -ssf novas.fsdb -nologo
+
+test2_bug_waves:
+	rm -rf novas.fsdb
+	ln -s bug_test2_almost.fsdb novas.fsdb
+	$(VERDI) -dbdir ./simv.daidir -ssf novas.fsdb -nologo
+
+test3_bug_waves:
+	rm -rf novas.fsdb
+	ln -s bug_test3_async_rw.fsdb novas.fsdb
+	$(VERDI) -dbdir ./simv.daidir -ssf novas.fsdb -nologo
+
 
 clean:
 	rm -rf *.log *.h csrc DVEFiles simv.daidir simv ucli.key vcdplus.vpd *.syn *.pvl *.mr *.svf command.log *.txt novas.conf novas.rc verdi_config_file verdiLog novas.fsdb novas.log nuevas_dump.log

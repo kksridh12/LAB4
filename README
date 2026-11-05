@@ -28,4 +28,22 @@ make test3_bug_waves
 
 # PART3
 
+make compile_verdi
+./simv +TEST=full_empty +TXN_MSG=0 
+./simv +TEST=full_empty +TXN_MSG=1 
+./simv +TEST=full_empty +TXN_MSG=2 
+./simv +TEST=almost +TXN_MSG=0
+./simv +TEST=almost +TXN_MSG=1
+./simv +TEST=almost +TXN_MSG=2
+./simv +TEST=async_rw +TXN_MSG=0
+./simv +TEST=async_rw +TXN_MSG=1
+./simv +TEST=async_rw +TXN_MSG=2
+./simv +TEST=empty_read +TXN_MSG=0
+./simv +TEST=empty_read +TXN_MSG=1
+./simv +TEST=empty_read +TXN_MSG=2
+make test0_waves
+make test1_waves
+make test2_waves
+make test3_waves
+
 
