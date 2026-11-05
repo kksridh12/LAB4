@@ -1,5 +1,4 @@
-timeunit 1ns;
-timeprecision 1ps;
+`timescale 1ns/1ps
 
 module odd_even_part4_tb;
 
