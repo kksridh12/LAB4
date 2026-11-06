@@ -10,7 +10,9 @@ interface odd_even_assert_if #(parameter int DSIZE = 8) (
     input logic odd_write_en,
     input logic even_write_en,
     input logic odd_read_en,
-    input logic even_read_en
+    input logic even_read_en,
+    input logic odd_rempty,
+    input logic even_rempty
 );
     // A1: An odd-valued write must select only the odd FIFO.
     ap_odd_routes_to_odd: assert property (
@@ -50,5 +52,21 @@ interface odd_even_assert_if #(parameter int DSIZE = 8) (
         @(posedge clock)
         !reset |-> (!odd_read_en && !even_read_en)
     ) else $error("SVA FAIL A6: read enables not cleared during reset");
+
+    // A7: Do not read odd FIFO twice consecutively
+    // when the even FIFO has data.
+    ap_no_back_to_back_odd: assert property (
+        @(posedge clock) disable iff (!reset)
+        (odd_read_en && !even_rempty)
+        |=> !odd_read_en
+    ) else $error("SVA FAIL A7: back-to-back odd reads");
+
+    // A8: Do not read even FIFO twice consecutively
+    // when the odd FIFO has data.
+    ap_no_back_to_back_even: assert property (
+        @(posedge clock) disable iff (!reset)
+        (even_read_en && !odd_rempty)
+        |=> !even_read_en
+    ) else $error("SVA FAIL A8: back-to-back even reads");
 
 endinterface
