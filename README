@@ -47,3 +47,14 @@ make test2_waves
 make test3_waves
 
 
+# PART4
+cd PART4/sim
+make compile_verdi
+make sim_case4
+make sim_case5
+make sim_bug
+make waves_case4
+make waves_case5
+make waves_bug
+
+** NOTE: waves_bug uses case4 fsdb **
