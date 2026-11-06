@@ -48,6 +48,7 @@ make test3_waves
 
 
 # PART4
+cd PART4/sim
 make compile_verdi
 make sim_case4
 make sim_case5
