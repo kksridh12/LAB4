@@ -1,9 +1,10 @@
 `timescale 1ns/1ps
-// interface for the even/odd FIFO.
-// Signals are driven by the testbench from the DUT hierarchy.
+
+// assertions for the Lab 1 even/odd FIFO.
+// The testbench connects internal DUT signals using hierarchical references.
 interface odd_even_assert_if #(parameter int DSIZE = 8) (
     input logic clock,
-    input logic reset,
+    input logic reset,  // Active-low reset (0 = reset asserted)
     input logic write_en,
     input logic [DSIZE-1:0] data_in,
     input logic odd_write_en,
@@ -11,43 +12,43 @@ interface odd_even_assert_if #(parameter int DSIZE = 8) (
     input logic odd_read_en,
     input logic even_read_en
 );
-
-    // If an odd-valued byte is requested, only the odd FIFO is selected.
+    // A1: An odd-valued write must select only the odd FIFO.
     ap_odd_routes_to_odd: assert property (
         @(posedge clock) disable iff (!reset)
-        (write_en && data_in[0] === 1'b1)
-            |-> (odd_write_en && !even_write_en)
-    ) else $error("SVA: odd byte not routed exclusively to odd FIFO");
+        (write_en && (data_in[0] === 1'b1))
+        |-> (odd_write_en && !even_write_en)
+    ) else $error("SVA FAIL A1: odd input not routed exclusively to odd FIFO");
 
-    // If an even-valued byte is requested, only the even FIFO is selected.
+    // A2: An even-valued write must select only the even FIFO.
     ap_even_routes_to_even: assert property (
         @(posedge clock) disable iff (!reset)
-        (write_en && data_in[0] === 1'b0)
-            |-> (even_write_en && !odd_write_en)
-    ) else $error("SVA: even byte not routed exclusively to even FIFO");
+        (write_en && (data_in[0] === 1'b0))
+        |-> (even_write_en && !odd_write_en)
+    ) else $error("SVA FAIL A2: even input not routed exclusively to even FIFO");
 
-    // Both parity FIFOs must never be written in the same cycle.
+    // A3: The two sub-FIFOs must never receive writes simultaneously.
     ap_no_dual_writes: assert property (
         @(posedge clock) disable iff (!reset)
         !(odd_write_en && even_write_en)
-    ) else $error("SVA: both FIFO write enables asserted");
+    ) else $error("SVA FAIL A3: both FIFO write enables asserted");
 
-    // Read arbitration must never read both parity FIFOs simultaneously.
+    // A4: The read arbitration must never read both sub-FIFOs at once.
     ap_no_dual_reads: assert property (
         @(posedge clock) disable iff (!reset)
         !(odd_read_en && even_read_en)
-    ) else $error("SVA: both FIFO read enables asserted");
+    ) else $error("SVA FAIL A4: both FIFO read enables asserted");
 
-    // With no write request, neither internal FIFO may be selected for writing.
+    // A5: No internal FIFO write may occur without an external write request.
     ap_no_write_without_request: assert property (
         @(posedge clock) disable iff (!reset)
         !write_en |-> (!odd_write_en && !even_write_en)
-    ) else $error("SVA: internal write enable without external request");
+    ) else $error("SVA FAIL A5: internal write with no external write request");
 
-    // Any internal write request must correspond to an external write request.
-    ap_write_en_source: assert property (
-        @(posedge clock) disable iff (!reset)
-        (odd_write_en || even_write_en) |-> write_en
-    ) else $error("SVA: stray internal FIFO write enable");
+    // A6: Active-low reset clears the registered read enables.
+    // Do NOT use disable iff (!reset) for this property: reset is the condition tested.
+    ap_reset_clears_reads: assert property (
+        @(posedge clock)
+        !reset |-> (!odd_read_en && !even_read_en)
+    ) else $error("SVA FAIL A6: read enables not cleared during reset");
 
 endinterface

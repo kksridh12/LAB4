@@ -189,11 +189,24 @@ module odd_even_part4_tb;
 					else begin
 						write_en = 1'b0;
 					end
-					@(posedge clock);
-				end
-				@(negedge clock);
-				write_en = 1'b0;
-			end
+                    // Optional controlled DUT fault for Lab 4 Part 4.
+                    // The selected cycle is an odd-valued write in Case 4.
+                    // Force the even FIFO write-enable high for one clock,
+                    // so A1/A3 must report an assertion failure.
+                    if ($test$plusargs("INJECT_BUG") && cycle == 25) begin
+                        $display("INJECT_BUG: forcing even_write_en at %0t, data_in=%h", $time, data_in);
+                        force dut.even_write_en = 1'b1;
+                    end
+                    @(posedge clock);
+                    if ($test$plusargs("INJECT_BUG") && cycle == 25) begin
+                        @(negedge clock);
+                        release dut.even_write_en;
+                        $display("INJECT_BUG: released even_write_en at %0t", $time);
+                    end
+                end
+                @(negedge clock);
+                write_en = 1'b0;
+            end
 
 			begin : consumer
 				run_consumer();
@@ -312,12 +325,14 @@ module odd_even_part4_tb;
 			"case4": begin
 				$fsdbDumpfile("test1_case4.fsdb");
 				$fsdbDumpvars(0, "+mda");
+				$fsdbDumpSVA;
 				test_case4();
 			end
 
 			"case5": begin
 				$fsdbDumpfile("test2_case5.fsdb");
 				$fsdbDumpvars(0, "+mda");
+				$fsdbDumpSVA;
 				test_case5();
 			end
 
