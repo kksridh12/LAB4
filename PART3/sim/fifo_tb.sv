@@ -62,51 +62,55 @@ class monitor #(parameter int DSIZE = 8);
 
 	task monitor_write();
         forever begin
-			transaction #(DSIZE) txn;
 			@(posedge w_vif.clk);
-			txn = new();
-			txn.timestamp = $time;
-			txn.kind = WRITE_TXN;
-			txn.winc = w_vif.winc;
-			txn.wdata = w_vif.wdata;
-			txn.wfull = w_vif.wfull;
-			txn.almost_wfull = w_vif.almost_wfull;
-			if (txn_msg == 2) begin
-				$display("[%0t] Monitor posted WRITE transaction: winc=%b wdata=%h wfull=%b almost_wfull=%b",
-				         txn.timestamp, txn.winc, txn.wdata, txn.wfull, txn.almost_wfull);
+			if (w_vif.winc) begin
+				transaction #(DSIZE) txn;
+				txn = new();
+				txn.timestamp = $time;
+				txn.kind = WRITE_TXN;
+				txn.winc = w_vif.winc;
+				txn.wdata = w_vif.wdata;
+				txn.wfull = w_vif.wfull;
+				txn.almost_wfull = w_vif.almost_wfull;
+				if (txn_msg == 2) begin
+					$display("[%0t] Monitor posted WRITE transaction: winc=%b wdata=%h wfull=%b almost_wfull=%b",
+					         txn.timestamp, txn.winc, txn.wdata, txn.wfull, txn.almost_wfull);
+				end
+				else if (txn_msg == 1) begin
+					$display("[%0t] Monitor posted WRITE transaction: winc=%b wdata=%h", txn.timestamp, txn.winc, txn.wdata);
+				end
+				else if (txn_msg == 0) begin
+					$display("[%0t] Monitor posted WRITE transaction", txn.timestamp);
+				end
+				mbx.put(txn);
 			end
-			else if (txn_msg == 1) begin
-				$display("[%0t] Monitor posted WRITE transaction: winc=%b wdata=%h", txn.timestamp, txn.winc, txn.wdata);
-			end
-			else if (txn_msg == 0) begin
-				$display("[%0t] Monitor posted WRITE transaction", txn.timestamp);
-			end
-			mbx.put(txn);
         end
     endtask
 
 	task monitor_read();
 		forever begin
-			transaction #(DSIZE) txn;
 			@(posedge r_vif.clk);
-			txn = new();
-			txn.timestamp = $time;
-			txn.kind = READ_TXN;
-			txn.rinc = r_vif.rinc;
-			txn.rdata = r_vif.rdata;
-			txn.rempty = r_vif.rempty;
-			txn.almost_rempty = r_vif.almost_rempty;
-			if (txn_msg == 2) begin
-				$display("[%0t] Monitor posted READ transaction: rinc=%b rdata=%h rempty=%b almost_rempty=%b",
-				         txn.timestamp, txn.rinc, txn.rdata, txn.rempty, txn.almost_rempty);
+			if (r_vif.rinc) begin
+				transaction #(DSIZE) txn;
+				txn = new();
+				txn.timestamp = $time;
+				txn.kind = READ_TXN;
+				txn.rinc = r_vif.rinc;
+				txn.rdata = r_vif.rdata;
+				txn.rempty = r_vif.rempty;
+				txn.almost_rempty = r_vif.almost_rempty;
+				if (txn_msg == 2) begin
+					$display("[%0t] Monitor posted READ transaction: rinc=%b rdata=%h rempty=%b almost_rempty=%b",
+					         txn.timestamp, txn.rinc, txn.rdata, txn.rempty, txn.almost_rempty);
+				end
+				else if (txn_msg == 1) begin
+					$display("[%0t] Monitor posted READ transaction: rinc=%b rdata=%h", txn.timestamp, txn.rinc, txn.rdata);
+				end
+				else if (txn_msg == 0) begin
+					$display("[%0t] Monitor posted READ transaction", txn.timestamp);
+				end
+				mbx.put(txn);
 			end
-			else if (txn_msg == 1) begin
-				$display("[%0t] Monitor posted READ transaction: rinc=%b rdata=%h", txn.timestamp, txn.rinc, txn.rdata);
-			end
-			else if (txn_msg == 0) begin
-				$display("[%0t] Monitor posted READ transaction", txn.timestamp);
-			end
-			mbx.put(txn);
 		end
 	endtask
 
@@ -141,46 +145,68 @@ class scoreboard #(parameter int FIFO_DEPTH = 16, parameter int DSIZE = 8);
     function new();
     endfunction 
 
-    task run();
-        forever begin
-			mbx.get(txn);
-			if (txn.kind == WRITE_TXN) begin
-				check_flags(txn, WFULL, ALMOST_WFULL);
-				if (txn.winc && !txn.wfull) begin
-					if (fifo_data.size() >= FIFO_DEPTH) begin
-						errors++;
-						$error("[%0t] write accepted while scoreboard FIFO is full", $time);
+    task run(virtual dut_wif #(DSIZE) w_vif, virtual dut_rif #(DSIZE) r_vif);
+		fork
+			begin : process_transactions
+				forever begin
+					mbx.get(txn);
+					if (txn.kind == WRITE_TXN) begin
+						if (txn.winc && !txn.wfull) begin
+							if (fifo_data.size() >= FIFO_DEPTH) begin
+								errors++;
+								$error("[%0t] write accepted while scoreboard FIFO is full", $time);
+							end
+							else begin
+								fifo_data.push_back(txn.wdata);
+								writes++;
+							end
+						end
 					end
 					else begin
-						fifo_data.push_back(txn.wdata);
-						writes++;
+						if (txn.rinc && !txn.rempty) begin
+							if (fifo_data.size() == 0) begin
+								errors++;
+								$error("[%0t] read accepted while scoreboard FIFO is empty", $time);
+							end
+							else begin
+								expected_data = fifo_data.pop_front();
+								reads++;
+								if (txn.rdata !== expected_data) begin
+									errors++;
+									$error("[%0t] rdata mismatch: expected %h, observed %h",
+									       $time, expected_data, txn.rdata);
+								end
+								if (expected_reads.size() != 0 &&
+								    txn.rdata !== expected_reads.pop_front()) begin
+									errors++;
+									$error("[%0t] test read expectation mismatch", $time);
+								end
+							end
+						end
 					end
 				end
 			end
-			else begin
-				check_flags(txn, REMPTY, ALMOST_REMPTY);
-				if (txn.rinc && !txn.rempty) begin
-					if (fifo_data.size() == 0) begin
-						errors++;
-						$error("[%0t] read accepted while scoreboard FIFO is empty", $time);
-					end
-					else begin
-						expected_data = fifo_data.pop_front();
-						reads++;
-						if (txn.rdata !== expected_data) begin
-							errors++;
-							$error("[%0t] rdata mismatch: expected %h, observed %h",
-							       $time, expected_data, txn.rdata);
-						end
-						if (expected_reads.size() != 0 &&
-						    txn.rdata !== expected_reads.pop_front()) begin
-							errors++;
-							$error("[%0t] test read expectation mismatch", $time);
-						end
-					end
+			begin : check_write_flags
+				forever begin
+					transaction #(DSIZE) observed;
+					@(posedge w_vif.clk);
+					observed = new();
+					observed.wfull = w_vif.wfull;
+					observed.almost_wfull = w_vif.almost_wfull;
+					check_flags(observed, WFULL, ALMOST_WFULL);
 				end
 			end
-        end
+			begin : check_read_flags
+				forever begin
+					transaction #(DSIZE) observed;
+					@(posedge r_vif.clk);
+					observed = new();
+					observed.rempty = r_vif.rempty;
+					observed.almost_rempty = r_vif.almost_rempty;
+					check_flags(observed, REMPTY, ALMOST_REMPTY);
+				end
+			end
+		join
     endtask
 
     // Intermediate task to check the expected flags against the observed flags in a transaction.
@@ -316,7 +342,7 @@ module fifo_tb;
 		sb.mbx = mbx;
 		fork
 			mon.run();
-			sb.run();
+			sb.run(dut_wif_inst, dut_rif_inst);
 		join
 	end
 		   
@@ -540,24 +566,28 @@ module fifo_tb;
 			"empty_read": begin
 				$fsdbDumpfile($sformatf("%stest0_empty_read.fsdb", fsdb_prefix));
 				$fsdbDumpvars(0, "+mda");
+				$fsdbDumpvars(fifo_tb, "+class","+object_level=4");
 				test_empty_read();
 			end
 
 			"full_empty": begin
 				$fsdbDumpfile($sformatf("%stest1_full_empty.fsdb", fsdb_prefix));
 				$fsdbDumpvars(0, "+mda");
+				$fsdbDumpvars(fifo_tb, "+class","+object_level=4");
 				test_full_empty();
 			end
 
 			"almost": begin
 				$fsdbDumpfile($sformatf("%stest2_almost.fsdb", fsdb_prefix));
 				$fsdbDumpvars(0, "+mda");
+				$fsdbDumpvars(fifo_tb, "+class","+object_level=4");
 				test_almost_flags();
 			end
 
 			"async_rw": begin
 				$fsdbDumpfile($sformatf("%stest3_async_rw.fsdb", fsdb_prefix));
 				$fsdbDumpvars(0, "+mda");
+				$fsdbDumpvars(fifo_tb, "+class","+object_level=4");
 				test_async_rw();
 			end
 

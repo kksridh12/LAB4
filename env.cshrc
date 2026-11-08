@@ -12,3 +12,8 @@ setenv LD_LIBRARY_PATH /usr/local2/synopsys/verdi_2024.09/verdi_2024/share/PLI/V
 setenv LD_LIBRARY_PATH /usr/local2/synopsys/verdi_2024.09/verdi_2024/platform/linux64/lib/Qt5/lib/depends/xlib:$LD_LIBRARY_PATH
 
 setenv PDK_DIR /usr/local2/cadence/NCSU/SRC/FreePDK45
+
+setenv FSDB_ENABLE_CLASS 1             # Enables basic class dumping
+setenv FSDB_ENABLE_EXPAND_CLASS 1      # Allows expanding class members in nWave
+setenv FSDB_VARIANT_SIZE_ARRAY 1       # (Optional) Enables dumping queues/dynamic arrays inside classes
+setenv VERDI_ENHANCE_DYNAMIC_OBJECT
