@@ -38,7 +38,9 @@ module odd_even_part4_tb;
 		.odd_write_en(dut.odd_write_en),
 		.even_write_en(dut.even_write_en),
 		.odd_read_en(dut.odd_read_en),
-		.even_read_en(dut.even_read_en)
+		.even_read_en(dut.even_read_en),
+		.odd_rempty(dut.odd_rempty),
+		.even_rempty(dut.even_rempty)
 	);
 
 	// 10 ns clock period

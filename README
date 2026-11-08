@@ -57,4 +57,10 @@ make waves_case4
 make waves_case5
 make waves_bug
 
+To view assertions
+1. Run any simulation and open the waves
+2. Add relevant signals to waveform
+3. Navigate to Tools -> Property Tools -> Evaluator, and select all of the assertions, and evaluate
+4. After evaluation, navigate to Window -> Assertion Debug to view the assertions being successful or failing.
+
 ** NOTE: waves_bug uses case4 fsdb **
